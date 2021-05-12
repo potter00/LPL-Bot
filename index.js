@@ -41,9 +41,10 @@ client.on('message', message => {
 
 
     }
-    mensaje = message.content.split(' ');
+    
     //cualquier parte de la oracion
     for (let index = 0; index < mensaje.length; index++) {
+        mensaje = message.content.split(' ');
         if (mensaje[index] === 'sergio') {
             message.channel.send('ese <@362075667522781187> es pto cuidado c:')
 
