@@ -67,11 +67,16 @@ client.on('message', message => {
             message.channel.send('buenas tardes uwu')
 
         }
+        if (mensaje[index] === 'nya') {
+            message.channel.send('NYA!   ICHI!   NI!  SAN!  NYA!')
+            message.channel.send('Arigato!')
+        }
+        
 
 
 
     }
-    //canal memes
+    
 
 })
 //detecta cuando alguien se conecta
@@ -107,7 +112,7 @@ client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to
 
     };
 });
-
+//cuando creas un canal(aun no tiene uso :D)
 client.on("channelCreate", (channel) => {
 
 
