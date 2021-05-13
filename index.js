@@ -5,62 +5,131 @@ const env = require('dotenv').config();
 const msg = require('./messages.json')
 const ffmpeg = require("ffmpeg-static");
 const ytdl = require('ytdl-core');
-const {Player} = require('discord-music-player')
+const { Player } = require('discord-music-player')
 require('@discordjs/opus')
+require('opusscript')
+
+
 
 const client = new Discord.Client()
+var isPlaying = false;
 
 // inicializacion del reproductor
-const player = new Player(client,{
+const player = new Player(client, {
     leaveOnEnd: false,
     leaveOnStop: false,
     leaveOnEmpty: true,
     timeout: 0,
-    volume: 150,
+    volume: 100,
     quality: 'high',
 })
 
-var queue = {
-    nowplayng: [],
-    list: []
-};
-var disp;
+async function play(channel,cancion){
+    if (isPlaying) {
+        await player.addToQueue(channel, cancion)
+        isPlaying = true;
+    } else {
+        await player.play(channel, cancion)
+        
+    }
+
+}
 
 // https://www.npmjs.com/package/discord-music-player
+async function PlaySong(usuario, prefix, accion, ...buscado) {
+    if (prefix == 'bot' && accion == 'pon') {
+        buscado.splice(0, 2)
+        var texto = buscado.toString().replace(/,/g, ' ')
+        play(usuario, texto)
+    }
 
+    if (prefix == 'bot' && accion == 'callate') {
+        player.pause(usuario);
+    }
 
+    if (prefix == 'bot' && accion == 'sigue') {
+        player.resume(usuario);
+    }
 
-async function Krico(usuario, prefix, accion, ...buscado){
-    if(prefix == 'bot' && accion == 'reproduce'){
-        buscado.splice(0,2)
-        var texto = buscado.toString().replace(/,/g,' ')
-
-        let song = await player.play(usuario,texto)
-
-        if(song){
-            console.log('Reproduciendo:' + texto);
-            console.log('Datos adicionales' + song.url)
-        }
-
+    if (prefix == 'bot' && accion == 'quitalo') {
+        player.skip(usuario);
+    }
+    if (prefix == 'bot' && accion == 'repitelo') {
+        player.toggleLoop(usuario);
+    }
+    
+    if(prefix == 'bot' && accion == 'limpia'){
+        player.clearQueue(usuario)
+    }
+    if(prefix == 'bot' && accion == 'lista'){
+        let queue = player.getQueue(usuario);
+        if(queue)
+            usuario.channel.send('Queue:\n'+(queue.songs.map((song, i) => {
+                return `${i === 0 ? 'Now Playing' : `#${i+1}`} - ${song.name} | ${song.author}`
+            }).join('\n')));
     }
 }
 
+player.on('error', (error,msg)=>{
+    switch (error) {
+        // Thrown when the YouTube search could not find any song with that query.
+        case 'SearchIsNull':
+            message.channel.send(`No song with that query was found.`);
+            break;
+        // Thrown when the provided YouTube Playlist could not be found.
+        case 'InvalidPlaylist':
+            message.channel.send(`No Playlist was found with that link.`);
+            break;
+        // Thrown when the provided Spotify Song could not be found.
+        case 'InvalidSpotify':
+            message.channel.send(`No Spotify Song was found with that link.`);
+            break;
+        // Thrown when the Guild Queue does not exist (no music is playing).
+        case 'QueueIsNull':
+            message.channel.send(`There is no music playing right now.`);
+            break;
+        // Thrown when the Members is not in a VoiceChannel.
+        case 'VoiceChannelTypeInvalid':
+            message.channel.send(`You need to be in a Voice Channel to play music.`);
+            break;
+        // Thrown when the current playing song was an live transmission (that is unsupported).
+        case 'LiveUnsupported':
+            message.channel.send(`We do not support YouTube Livestreams.`);
+            break;
+        // Thrown when the current playing song was unavailable.
+        case 'VideoUnavailable':
+            message.channel.send(`Something went wrong while playing the current song, skipping...`);
+            break;
+        // Thrown when provided argument was Not A Number.
+        case 'NotANumber':
+            message.channel.send(`The provided argument was Not A Number.`);
+            break;
+        // Thrown when the first method argument was not a Discord Message object.
+        case 'MessageTypeInvalid':
+            message.channel.send(`The Message object was not provided.`);
+            break;
+        // Thrown when the Guild Queue does not exist (no music is playing).
+        default:
+            message.channel.send(`**Unknown Error Ocurred:** ${error}`);
+            break;
+    }
+})
+
 client.on('ready', () => {
     console.log('Bot iniciado')
-    client.user.setActivity('ser el mejor',{type: 'COMPETING'})
+    client.user.setActivity('ser el mejor', { type: 'COMPETING' })
 
     //var canalGeneral = client.channels.get("797201475108864031")
     //canalGeneral.send("estoy viva ptos")
 })
 
 //contestar mensajes
-client.on('message', async message => {
+client.on('message', message => {
     if (message.author.bot) return;
 
     var music = message.content.split(' ');
 
-    await Krico(message,music[0],music[1],...music)
-    //Play(message,music[0],music[1],...music)
+    PlaySong(message, music[0], music[1], ...music)
 
     var mensaje = message.content.toLowerCase();
     for (const accion of msg) {
@@ -74,21 +143,16 @@ client.on('message', async message => {
         var name = message.author.username;
         var userId = message.author.id
 
-        server.channels.create(`Canal de ${name}`,
-            {
-                type: 'voice',
-                permissionOverwrites: [
-                    {
-                        id: message.guild.roles.guild.id,
-
-                        allow: ['ADMINISTRATOR']
-                    }
-                ]
-            })
-            .then(channel => {
-                channel.setParent('797201475108864033')
-            })
-
+        server.channels.create(`Canal de ${name}`, {
+            type: 'text', permissionOverwrites: [{
+                
+                id: message.author.id,
+                allow: ['MANAGE_CHANNELS']
+            }]
+        }).then(channel => {
+            channel.setParent('842140736602374154')
+        })
+           
 
     }
 
@@ -119,8 +183,9 @@ client.on('message', async message => {
 
         }
         if (mensaje[index] === 'nya') {
-            message.channel.send('NYA!   ICHI!   NI!  SAN!  NYA!')
-            message.channel.send('Arigato!')
+            message.channel.send('NYA!   ICHI!   NI!  SAN!  NYA!');
+            message.channel.send('Arigato!');
+            play(message, 'NYA! ARIGATO')
         }
     }
 })
@@ -158,72 +223,10 @@ client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to
     };
 });
 //cuando creas un canal(aun no tiene uso :D)
-client.on("channelCreate", (channel) => {
-
-
-
-
+player.on('queryEnd', (message,queue)=>{
+  
+      isPlaying = false;  
 })
-client.on('message', message =>{
-
-        
-        var msg = message.content.split(' ');
-        
-
-
-        if( msg[0] == 'bot' && msg[1] == 'pon'){
-            
-            msg.shift();
-            msg.shift();
-            if (message.member.voice.channel) {
-                async function play() {
-                    const connection = await message.member.voice.channel.join();
-                    const dispatcher = connection.play(await ytdl(queue.list[0], { filter: 'audio' }));
-                    disp = dispatcher;
-
-                    dispatcher.on('start', async() =>{
-                        queue.nowplayng[0] = queue.list[0];
-                        await queue.list.shift();
-                    });
-                    dispatcher.on('start',async()=>{
-                        if (!queue.nowplayng[0]) {
-                            var m = await message.channel.send('no quedan canciones we');
-                           queue.list = [];
-                           queue.nowplayng = [];
-                           dispatcher.destroy();
-                           message.member.voice.channel.leave();
-                           await m.delete({timeout:5000})
-                           return
-                            
-                        }else{
-                            play();
-                        }
-                    });
-                }
-                
-                if (msg[0]) {
-                    if (!queue.nowplayng[0]) {
-                        queue.list.push(`${msg.slice(0).join(' ')}`);
-                        play();
-                    }else{
-                        queue.list.push(`${msg.slice(0).join(' ')}`);
-                       // var m = await message.channel.send(`se añadio a la cola onii chan ^w^${msg.slice(0).join(' ')}`)
-                       // await m.delete({timeout:5000});
-                        return
-                    }
-
-                }else{  
-
-                }
-
-            }
-    
-    
-    
-        }
-    
-})
-
 
 
 
