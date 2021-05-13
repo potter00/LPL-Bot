@@ -1,47 +1,95 @@
 const { Server } = require("discord.io");
 const Discord = require("discord.js")
 const config = require("./auth.json")
+const env = require('dotenv').config();
+const msg = require('./messages.json')
+const ffmpeg = require("ffmpeg-static");
+const ytdl = require('ytdl-core');
+const {Player} = require('discord-music-player')
+
 const client = new Discord.Client()
 
+// inicializacion del reproductor
+const player = new Player(client,{
+    leaveOnEnd: false,
+    leaveOnStop: false,
+    leaveOnEmpty: true,
+    timeout: 0,
+    volume: 150,
+    quality: 'high',
+})
+
+var queue = {
+    nowplayng: [],
+    list: []
+};
+var disp;
+
+// https://www.npmjs.com/package/discord-music-player
+
+
+
+async function Krico(usuario, prefix, accion, ...buscado){
+    if(prefix == 'bot' && accion == 'reproduce'){
+        buscado.splice(0,2)
+        var texto = buscado.toString().replace(/,/g,' ')
+
+        let song = await player.play(usuario,texto)
+
+        if(song){
+            console.log('Reproduciendo:' + texto);
+        }
+
+    }
+}
 
 client.on('ready', () => {
+    console.log('Bot iniciado')
+    client.user.setActivity('ser el mejor',{type: 'COMPETING'})
 
-    var canalGeneral = client.channels.get("797201475108864031")
-
-
-
-    canalGeneral.send("estoy viva ptos")
+    //var canalGeneral = client.channels.get("797201475108864031")
+    //canalGeneral.send("estoy viva ptos")
 })
 
 //contestar mensajes
-client.on('message', message => {
-    var mensaje = message.content;
-    mensaje.toLowerCase();
+client.on('message', async message => {
+    if (message.author.bot) return;
 
-    //todos los canales
+    var music = message.content.split(' ');
 
-    if (mensaje === "este si") {
-        message.channel.send('este no')
-    }
-    if (mensaje === "buenos dias") {
-        message.channel.send('señor sol')
-    }
-    if (mensaje === "dime buenos dias") {
-        message.channel.send('buenos dias uwu, y si nadie te lo dijo eres un pendejo ^w^')
-    }
-    if (mensaje === 'crea un nuevo canal') {
+    await Krico(message,music[0],music[1],...music)
+    //Play(message,music[0],music[1],...music)
 
+    var mensaje = message.content.toLowerCase();
+    for (const accion of msg) {
+        if (mensaje == accion.message) {
+            message.channel.send(accion.response)
+        }
+    }
+
+    if (mensaje === 'quiero un canal') {
         var server = message.guild;
         var name = message.author.username;
+        var userId = message.author.id
 
-        server.channels.create('voice1', { type: 'voice' })
+        server.channels.create(`Canal de ${name}`,
+            {
+                type: 'voice',
+                permissionOverwrites: [
+                    {
+                        id: message.guild.roles.guild.id,
+
+                        allow: ['ADMINISTRATOR']
+                    }
+                ]
+            })
             .then(channel => {
                 channel.setParent('797201475108864033')
             })
 
 
     }
-    
+
     //cualquier parte de la oracion
     for (let index = 0; index < mensaje.length; index++) {
         mensaje = message.content.split(' ');
@@ -72,13 +120,7 @@ client.on('message', message => {
             message.channel.send('NYA!   ICHI!   NI!  SAN!  NYA!')
             message.channel.send('Arigato!')
         }
-        
-
-
-
     }
-    
-
 })
 //detecta cuando alguien se conecta
 client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to the voiceStateUpdate event
@@ -90,11 +132,11 @@ client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to
             var id = newVoiceState.channel.parentID;
 
 
-            server.channels.create(`${newVoiceState.member.user.tag} chanel`, { type: 'voice' }).then(channel => { 
+            server.channels.create(`${newVoiceState.member.user.tag} chanel`, { type: 'voice' }).then(channel => {
                 channel.setParent('842140736602374154');
-                setTimeout(move,1000);
-                
-                function move(){
+                setTimeout(move, 1000);
+
+                function move() {
                     newVoiceState.member.voice.setChannel(channel);
                 };
             })
@@ -120,10 +162,31 @@ client.on("channelCreate", (channel) => {
 
 
 })
+client.on('message', message =>{
+
+    
+        var msg = message.content.split(' ')
+        if( msg[0] == 'bot' && msg[1] == 'pon'){
+    
+            if (message.member.voice.channel) {
+                async function play() {
+                    con
+                    
+                }
+                
+
+
+            }
+    
+    
+    
+        }
+    
+})
 
 
 
 
-
-client.login(config.token)
+// TOMAR DEL .ENV LA VARIABLE DISCORD_TOKEN
+client.login(config.token) // ENV.DISCROD_TOKEN
 
