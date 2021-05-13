@@ -6,6 +6,7 @@ const msg = require('./messages.json')
 const ffmpeg = require("ffmpeg-static");
 const ytdl = require('ytdl-core');
 const {Player} = require('discord-music-player')
+require('@discordjs/opus')
 
 const client = new Discord.Client()
 
@@ -38,6 +39,7 @@ async function Krico(usuario, prefix, accion, ...buscado){
 
         if(song){
             console.log('Reproduciendo:' + texto);
+            console.log('Datos adicionales' + song.url)
         }
 
     }
@@ -164,17 +166,55 @@ client.on("channelCreate", (channel) => {
 })
 client.on('message', message =>{
 
-    
-        var msg = message.content.split(' ')
+        
+        var msg = message.content.split(' ');
+        
+
+
         if( msg[0] == 'bot' && msg[1] == 'pon'){
-    
+            
+            msg.shift();
+            msg.shift();
             if (message.member.voice.channel) {
                 async function play() {
-                    con
-                    
+                    const connection = await message.member.voice.channel.join();
+                    const dispatcher = connection.play(await ytdl(queue.list[0], { filter: 'audio' }));
+                    disp = dispatcher;
+
+                    dispatcher.on('start', async() =>{
+                        queue.nowplayng[0] = queue.list[0];
+                        await queue.list.shift();
+                    });
+                    dispatcher.on('start',async()=>{
+                        if (!queue.nowplayng[0]) {
+                            var m = await message.channel.send('no quedan canciones we');
+                           queue.list = [];
+                           queue.nowplayng = [];
+                           dispatcher.destroy();
+                           message.member.voice.channel.leave();
+                           await m.delete({timeout:5000})
+                           return
+                            
+                        }else{
+                            play();
+                        }
+                    });
                 }
                 
+                if (msg[0]) {
+                    if (!queue.nowplayng[0]) {
+                        queue.list.push(`${msg.slice(0).join(' ')}`);
+                        play();
+                    }else{
+                        queue.list.push(`${msg.slice(0).join(' ')}`);
+                       // var m = await message.channel.send(`se añadio a la cola onii chan ^w^${msg.slice(0).join(' ')}`)
+                       // await m.delete({timeout:5000});
+                        return
+                    }
 
+                }else{  
+
+                }
 
             }
     
