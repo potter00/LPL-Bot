@@ -5,14 +5,14 @@ const env = require('dotenv').config();
 const msg = require('./messages.json')
 const ffmpeg = require("ffmpeg-static");
 const ytdl = require('ytdl-core');
-const { Player } = require('discord-music-player')
+const { Player, Playlist } = require('discord-music-player')
 require('@discordjs/opus')
 require('opusscript')
 
 
 
 const client = new Discord.Client()
-var isPlaying = false;
+var isPlaying;
 
 // inicializacion del reproductor
 const player = new Player(client, {
@@ -23,14 +23,14 @@ const player = new Player(client, {
     volume: 100,
     quality: 'high',
 })
+client.player = player;
 
 async function play(channel,cancion){
     if (isPlaying) {
         await player.addToQueue(channel, cancion)
-        isPlaying = true;
+        
     } else {
         await player.play(channel, cancion)
-        
     }
 
 }
@@ -124,8 +124,12 @@ client.on('ready', () => {
 })
 
 //contestar mensajes
-client.on('message', message => {
+client.on('message', async (message) => {
     if (message.author.bot) return;
+
+
+
+
 
     var music = message.content.split(' ');
 
@@ -137,20 +141,22 @@ client.on('message', message => {
             message.channel.send(accion.response)
         }
     }
-
+    if (message.content === 'buenos dias') {
+        player.play(message,'buenos dias hijos de puta kiryu coco')
+    }
     if (mensaje === 'quiero un canal') {
         var server = message.guild;
         var name = message.author.username;
         var userId = message.author.id
 
-        server.channels.create(`Canal de ${name}`, {
+        server.channels.create(`General`, {
             type: 'text', permissionOverwrites: [{
                 
                 id: message.author.id,
                 allow: ['MANAGE_CHANNELS']
             }]
         }).then(channel => {
-            channel.setParent('842140736602374154')
+            channel.setParent('797200371826294785')
         })
            
 
@@ -185,7 +191,19 @@ client.on('message', message => {
         if (mensaje[index] === 'nya') {
             message.channel.send('NYA!   ICHI!   NI!  SAN!  NYA!');
             message.channel.send('Arigato!');
-            play(message, 'NYA! ARIGATO')
+            let bol;
+            if (isPlaying) {
+                
+                
+                let song = await player.addToQueue(message,'NYA! ARIGATO')
+                
+            }else{
+                
+                let song = await player.play(message,'NYA! ARIGATO')
+                
+                bol=true;
+            }
+            
         }
     }
 })
@@ -222,13 +240,21 @@ client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to
 
     };
 });
-//cuando creas un canal(aun no tiene uso :D)
-player.on('queryEnd', (message,queue)=>{
-  
-      isPlaying = false;  
-})
+//eventos del reproductor
+client.player.on('queueEnd',  (message, queue) =>
+message.channel.send(`no tengo nada mas que poner D:!`))
 
+client.player.on('queueEnd',  (message, queue) =>
+isPlaying = false)
 
+client.player.on('songAdd',  (message, queue, song) =>
+message.channel.send(`**${song.name}** se a agregado correctamente onii-chan ^w^!`))
+
+client.player.on('songAdd',  (message, queue, song) =>
+isPlaying = true)
+
+client.player.on('songChanged', (message, newSong, oldSong) =>
+        message.channel.send(`Ahora pondre ^w^ **${newSong.name}** `))
 
 // TOMAR DEL .ENV LA VARIABLE DISCORD_TOKEN
 client.login(config.token) // ENV.DISCROD_TOKEN
