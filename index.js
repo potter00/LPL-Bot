@@ -16,10 +16,10 @@ var isPlaying;
 
 // inicializacion del reproductor
 const player = new Player(client, {
-    leaveOnEnd: false,
+    leaveOnEnd: true,
     leaveOnStop: false,
     leaveOnEmpty: true,
-    timeout: 0,
+    timeout: 10000,
     volume: 100,
     quality: 'high',
 })
@@ -28,9 +28,10 @@ client.player = player;
 async function play(channel,cancion){
     if (isPlaying) {
         await player.addToQueue(channel, cancion)
-        
+        console.log('Si se anadio onii chan!')
     } else {
         await player.play(channel, cancion)
+        console.log('se puso play onii chan!!!')
     }
 
 }
@@ -165,18 +166,23 @@ client.on('message', async (message) => {
     //cualquier parte de la oracion
     for (let index = 0; index < mensaje.length; index++) {
         mensaje = message.content.split(' ');
+        
         if (mensaje[index] === 'sergio') {
-            message.channel.send('ese <@362075667522781187> es pto cuidado c:')
+            message.channel.send('Ese <@362075667522781187> es pto cuidado c:')
+
+        }
+        if (mensaje[index] === 'otafi') {
+            message.channel.send('El pinche <@378285607543242765> esta bien pendejo gasto 3000 varos en lol')
 
         }
         if (mensaje[index] === 'besame') {
             var autor = message.author.id;
-            message.channel.send('cuando quieras <@' + autor + '> bb GRRR')
+            message.channel.send('Cuando quieras <@' + autor + '> bb GRRR')
 
         }
         if (mensaje[index] === 'puta' || mensaje[index] === 'puto') {
             var autor = message.author.id;
-            message.channel.send('no digas esas palabras  <@' + autor + '> porfis :c')
+            message.channel.send('No digas esas palabras  <@' + autor + '> porfis :c')
 
         }
         if (mensaje[index] === 'sexo' || mensaje[index] === '!sexo' || mensaje[index] === '!sexo!') {
@@ -185,12 +191,13 @@ client.on('message', async (message) => {
             message.channel.send('¡En exceso!');
         }
         if (mensaje[index] === 'saluda') {
-            message.channel.send('buenas tardes uwu')
+            message.channel.send('Buenas tardes uwu')
 
         }
         if (mensaje[index] === 'nya') {
             message.channel.send('NYA!   ICHI!   NI!  SAN!  NYA!');
             message.channel.send('Arigato!');
+            
             let bol;
             if (isPlaying) {
                 
@@ -237,12 +244,18 @@ client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => { // Listeing to
                 oldVoiceState.channel.delete();
             }
         }
+        if (oldVoiceState.member.id === '841837240938135553') {
+            console.log('si entro oniichan!!!!!!!!!!');
+            isPlaying=false;
+        }
 
     };
 });
 //eventos del reproductor
 client.player.on('queueEnd',  (message, queue) =>
 message.channel.send(`no tengo nada mas que poner D:!`))
+
+
 
 client.player.on('queueEnd',  (message, queue) =>
 isPlaying = false)
